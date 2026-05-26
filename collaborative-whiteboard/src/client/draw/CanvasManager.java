@@ -11,7 +11,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
-import shared.DrawEvent;
+import shared.model.DrawEvent;
 
 import java.util.LinkedList;
 import java.util.Queue;
