@@ -1,5 +1,6 @@
-// client/draw/CanvasManager.java
 package client.draw;
+
+import shared.model.DrawEvent;
 
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -11,15 +12,29 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
-import shared.model.DrawEvent;
+import javafx.scene.image.Image;
+import javafx.scene.image.WritableImage;
+import javafx.stage.FileChooser;
+import java.io.File;
+import javax.imageio.ImageIO;
+import javafx.embed.swing.SwingFXUtils;
+import java.util.Stack;
+import javafx.scene.control.Label;
+import java.util.HashMap;
+import java.util.Map;
 
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.function.Consumer;
 
 public class CanvasManager {
+    private final Stack<Image> undoHistory = new Stack<>();
+    private final Stack<Image> redoHistory = new Stack<>();
+    private final int MAX_HISTORY = 15;
+
     private final Canvas mainCanvas;
     private final Canvas previewCanvas;
+    private final Canvas gridCanvas;
     private final Pane overlayPane;
     private final GraphicsContext mainGc;
     private final GraphicsContext previewGc;
@@ -33,13 +48,18 @@ public class CanvasManager {
         Point(int x, int y) { this.x = x; this.y = y; }
     }
 
-    public CanvasManager(Canvas mainCanvas, Canvas previewCanvas, Pane overlayPane, ToolManager toolManager) {
+    private final Map<String, Label> remoteCursors = new HashMap<>();
+
+    public CanvasManager(Canvas mainCanvas, Canvas previewCanvas, Canvas gridCanvas, Pane overlayPane, ToolManager toolManager) {
         this.mainCanvas = mainCanvas;
         this.previewCanvas = previewCanvas;
+        this.gridCanvas = gridCanvas;
         this.overlayPane = overlayPane;
         this.mainGc = mainCanvas.getGraphicsContext2D();
         this.previewGc = previewCanvas.getGraphicsContext2D();
         this.toolManager = toolManager;
+
+        drawGridPattern(); // Initialize the grid
         setupMouseEvents();
     }
 
@@ -303,5 +323,134 @@ public class CanvasManager {
         mainGc.clearRect(0, 0, mainCanvas.getWidth(), mainCanvas.getHeight());
         previewGc.clearRect(0, 0, previewCanvas.getWidth(), previewCanvas.getHeight());
         overlayPane.getChildren().clear();
+    }
+
+    public void saveSnapshot() {
+        WritableImage snapshot = new WritableImage((int) mainCanvas.getWidth(), (int) mainCanvas.getHeight());
+        mainCanvas.snapshot(null, snapshot);
+
+        if (undoHistory.size() == MAX_HISTORY) {
+            undoHistory.remove(0); // Prevent OutOfMemory by dropping the oldest state
+        }
+        undoHistory.push(snapshot);
+        redoHistory.clear(); // Drawing a new line permanently clears the "redo" future
+    }
+
+    public void undo() {
+        if (!undoHistory.isEmpty()) {
+            WritableImage currentSnapshot = new WritableImage((int) mainCanvas.getWidth(), (int) mainCanvas.getHeight());
+            mainCanvas.snapshot(null, currentSnapshot);
+            redoHistory.push(currentSnapshot);
+
+            Image previousState = undoHistory.pop();
+            mainGc.clearRect(0, 0, mainCanvas.getWidth(), mainCanvas.getHeight());
+            mainGc.drawImage(previousState, 0, 0);
+        }
+    }
+
+    public void redo() {
+        if (!redoHistory.isEmpty()) {
+            WritableImage currentSnapshot = new WritableImage((int) mainCanvas.getWidth(), (int) mainCanvas.getHeight());
+            mainCanvas.snapshot(null, currentSnapshot);
+            undoHistory.push(currentSnapshot);
+
+            Image nextState = redoHistory.pop();
+            mainGc.clearRect(0, 0, mainCanvas.getWidth(), mainCanvas.getHeight());
+            mainGc.drawImage(nextState, 0, 0);
+        }
+    }
+
+    public void clearHistory() {
+        undoHistory.clear();
+        redoHistory.clear();
+    }
+
+    public void saveCanvasToDisk() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Save Whiteboard");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PNG Files", "*.png"));
+        File file = fileChooser.showSaveDialog(mainCanvas.getScene().getWindow());
+
+        if (file != null) {
+            try {
+                WritableImage writableImage = new WritableImage((int) mainCanvas.getWidth(), (int) mainCanvas.getHeight());
+                mainCanvas.snapshot(null, writableImage);
+                ImageIO.write(SwingFXUtils.fromFXImage(writableImage, null), "png", file);
+            } catch (Exception e) {
+                System.err.println("Failed to save image: " + e.getMessage());
+            }
+        }
+    }
+
+    public void loadCanvasFromDisk() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Open Whiteboard Image");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PNG Files", "*.png"));
+        File file = fileChooser.showOpenDialog(mainCanvas.getScene().getWindow());
+
+        if (file != null) {
+            saveSnapshot(); // Save current state in case they want to undo the load
+            Image image = new Image(file.toURI().toString());
+            mainGc.clearRect(0, 0, mainCanvas.getWidth(), mainCanvas.getHeight());
+            mainGc.drawImage(image, 0, 0);
+        }
+    }
+
+    public javafx.scene.image.Image getCanvasSnapshot() {
+        WritableImage snapshot = new WritableImage((int) mainCanvas.getWidth(), (int) mainCanvas.getHeight());
+        mainCanvas.snapshot(null, snapshot);
+        return snapshot;
+    }
+
+    public void loadCanvasSnapshot(javafx.scene.image.Image snapshot) {
+        clearCanvas(); // Always wipe the board first
+        if (snapshot != null) {
+            mainGc.drawImage(snapshot, 0, 0); // Stamp the saved draft back on
+        }
+    }
+
+    private void drawGridPattern() {
+        GraphicsContext gc = gridCanvas.getGraphicsContext2D();
+        gc.setFill(Color.web("#d3d3d3")); // Professional light-grey
+        for (int x = 0; x < gridCanvas.getWidth(); x += 20) {
+            for (int y = 0; y < gridCanvas.getHeight(); y += 20) {
+                gc.fillOval(x, y, 2, 2); // Small notebook-style dots
+            }
+        }
+        gridCanvas.setVisible(false); // Hidden by default
+    }
+
+    public void setGridVisible(boolean visible) {
+        gridCanvas.setVisible(visible);
+    }
+
+    // --- NEW: LIVE CURSOR METHODS ---
+    public void updateRemoteCursor(String username, double x, double y, String colorHex) {
+        // If the teammate doesn't have a cursor on screen yet, build one!
+        Label cursor = remoteCursors.computeIfAbsent(username, k -> {
+            Label newCursor = new Label("↖ " + username);
+            newCursor.setStyle(
+                    "-fx-background-color: " + colorHex + "; " +
+                            "-fx-text-fill: white; " +
+                            "-fx-padding: 2 6 2 6; " +
+                            "-fx-background-radius: 4; " +
+                            "-fx-font-size: 11px; " +
+                            "-fx-font-weight: bold; " +
+                            "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 3, 0, 1, 1);"
+            );
+            overlayPane.getChildren().add(newCursor);
+            return newCursor;
+        });
+
+        // Glide the cursor to the teammate's current mouse position
+        cursor.setLayoutX(x);
+        cursor.setLayoutY(y);
+    }
+
+    public void removeRemoteCursor(String username) {
+        Label cursor = remoteCursors.remove(username);
+        if (cursor != null) {
+            overlayPane.getChildren().remove(cursor);
+        }
     }
 }

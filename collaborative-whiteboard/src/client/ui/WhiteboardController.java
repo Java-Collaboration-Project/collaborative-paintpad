@@ -1,4 +1,3 @@
-// client/ui/WhiteboardController.java
 package client.ui;
 
 import client.draw.CanvasManager;
@@ -8,6 +7,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 
 public class WhiteboardController {
     private final BorderPane root;
@@ -17,15 +17,16 @@ public class WhiteboardController {
         root = new BorderPane();
         ToolManager toolManager = new ToolManager();
 
+        // Setup Layers
+        Canvas gridCanvas = new Canvas(1920, 1080); // NEW: Background grid layer
         Canvas mainCanvas = new Canvas(1920, 1080);
         Canvas previewCanvas = new Canvas(1920, 1080);
-
-        // NEW: Transparent overlay node layer to anchor native text pads natively
         Pane overlayPane = new Pane();
-        overlayPane.setPickOnBounds(false); // Allows clicks on empty spaces to pass through to canvas
+        overlayPane.setPickOnBounds(false);
 
         StackPane canvasHolder = new StackPane();
-        canvasHolder.getChildren().addAll(mainCanvas, previewCanvas, overlayPane);
+        // gridCanvas must go FIRST so it sits beneath the drawings
+        canvasHolder.getChildren().addAll(gridCanvas, mainCanvas, previewCanvas, overlayPane);
         canvasHolder.setStyle("-fx-background-color: white;");
 
         ScrollPane scrollPane = new ScrollPane();
@@ -34,11 +35,33 @@ public class WhiteboardController {
         scrollPane.setFitToWidth(true);
         scrollPane.setFitToHeight(true);
 
-        // Pass the overlay pane into your CanvasManager workspace
-        canvasManager = new CanvasManager(mainCanvas, previewCanvas, overlayPane, toolManager);
-        ToolbarController toolbarController = new ToolbarController(toolManager, canvasManager);
+        // Zoom Engine
+        final double SCALE_DELTA = 1.1;
+        canvasHolder.setOnScroll(event -> {
+            if (event.isControlDown()) {
+                event.consume();
+                double zoomFactor = event.getDeltaY() > 0 ? SCALE_DELTA : 1 / SCALE_DELTA;
+                double currentScale = canvasHolder.getScaleX();
+                double newScale = currentScale * zoomFactor;
+                if (newScale >= 0.1 && newScale <= 5.0) {
+                    canvasHolder.setScaleX(newScale);
+                    canvasHolder.setScaleY(newScale);
+                }
+            }
+        });
 
-        root.setTop(toolbarController.getToolbar());
+        // Pass gridCanvas to CanvasManager
+        canvasManager = new CanvasManager(mainCanvas, previewCanvas, gridCanvas, overlayPane, toolManager);
+
+        ToolbarController toolbarController = new ToolbarController(toolManager, canvasManager);
+        MenuBarController menuBarController = new MenuBarController(canvasManager);
+        SidebarController sidebarController = new SidebarController(canvasManager);
+
+        VBox topContainer = new VBox();
+        topContainer.getChildren().addAll(menuBarController.getMenuBar(), toolbarController.getToolbar());
+
+        root.setTop(topContainer);
+        root.setLeft(sidebarController.getSidebar());
         root.setCenter(scrollPane);
     }
 
