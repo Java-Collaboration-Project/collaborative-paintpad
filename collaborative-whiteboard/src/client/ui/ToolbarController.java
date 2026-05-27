@@ -1,4 +1,3 @@
-// client/ui/ToolbarController.java
 package client.ui;
 
 import client.draw.CanvasManager;

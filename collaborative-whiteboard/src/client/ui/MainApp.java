@@ -1,4 +1,3 @@
-// client/ui/MainApp.java
 package client.ui;
 
 import javafx.application.Application;
