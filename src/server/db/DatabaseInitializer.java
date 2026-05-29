@@ -36,11 +36,11 @@ public class DatabaseInitializer {
                     user_id VARCHAR(50),
                     tool VARCHAR(50),
                     color VARCHAR(20),
-                    stroke_width DOUBLE,
-                    x1 DOUBLE,
-                    y1 DOUBLE,
-                    x2 DOUBLE,
-                    y2 DOUBLE,
+                    stroke_width double precision,
+                    x1 double precision,
+                    y1 double precision,
+                    x2 double precision,
+                    y2 double precision,
                     timestamp BIGINT
                 )
             """);
