@@ -20,9 +20,11 @@ public class SidebarController {
     // Data structure to hold session drafts locally in RAM
     private final Map<String, Image> sessionDrafts;
     private String currentUser = null; // Tracks who we are currently drawing with
+    private final java.util.function.Consumer<String> onSessionChanged;
 
-    public SidebarController(CanvasManager canvasManager) {
+    public SidebarController(CanvasManager canvasManager, java.util.function.Consumer<String> onSessionChanged) {
         this.canvasManager = canvasManager;
+        this.onSessionChanged = onSessionChanged;
         this.sidebar = new VBox(10);
         this.userList = new ListView<>();
         this.sessionDrafts = new HashMap<>();
@@ -40,7 +42,7 @@ public class SidebarController {
         header.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
 
         ObservableList<String> users = FXCollections.observableArrayList(
-                "Moss F. (New)", "Moss T. (Existing)", "Team Sync", "Personal Draft"
+                "Team Sync", "Personal Draft"
         );
         userList.setItems(users);
 
@@ -69,9 +71,50 @@ public class SidebarController {
                 // 5. Update the current user tracker
                 currentUser = newUser;
                 System.out.println("Switched session to: " + newUser);
+
+                // 6. Tell WhiteboardController to switch session
+                String newSessionId = "global-session";
+                if (newUser.equals("Team Sync")) {
+                    newSessionId = "global-session";
+                } else if (newUser.equals("Personal Draft")) {
+                    String myUsername = client.ui.LoginController.currentUser != null ? client.ui.LoginController.currentUser.getUsername() : "unknown";
+                    newSessionId = "personal-" + myUsername;
+                } else {
+                    String myUsername = client.ui.LoginController.currentUser != null ? client.ui.LoginController.currentUser.getUsername() : "unknown";
+                    if (myUsername.compareTo(newUser) < 0) {
+                        newSessionId = "dm-" + myUsername + "-" + newUser;
+                    } else {
+                        newSessionId = "dm-" + newUser + "-" + myUsername;
+                    }
+                }
+                if (onSessionChanged != null) {
+                    onSessionChanged.accept(newSessionId);
+                }
             }
         });
 
         sidebar.getChildren().addAll(header, userList);
+    }
+
+    public void updateActiveUsers(java.util.List<String> onlineUsers) {
+        ObservableList<String> users = FXCollections.observableArrayList();
+        users.add("Team Sync");
+        users.add("Personal Draft");
+        
+        String myUsername = client.ui.LoginController.currentUser != null ? client.ui.LoginController.currentUser.getUsername() : "";
+        
+        for (String user : onlineUsers) {
+            if (!user.equals(myUsername)) {
+                users.add(user);
+            }
+        }
+        
+        String currentSelection = userList.getSelectionModel().getSelectedItem();
+        userList.setItems(users);
+        if (currentSelection != null && users.contains(currentSelection)) {
+            userList.getSelectionModel().select(currentSelection);
+        } else {
+            userList.getSelectionModel().select("Team Sync");
+        }
     }
 }

@@ -33,10 +33,21 @@ public class MenuBarController {
         openItem.setAccelerator(new KeyCodeCombination(KeyCode.O, KeyCombination.CONTROL_DOWN));
         openItem.setOnAction(e -> canvasManager.loadCanvasFromDisk());
 
+        MenuItem exportPdfItem = new MenuItem("Export to PDF...");
+        exportPdfItem.setOnAction(e -> {
+            javafx.stage.FileChooser fileChooser = new javafx.stage.FileChooser();
+            fileChooser.setTitle("Export to PDF");
+            fileChooser.getExtensionFilters().add(new javafx.stage.FileChooser.ExtensionFilter("PDF Files", "*.pdf"));
+            java.io.File file = fileChooser.showSaveDialog(menuBar.getScene().getWindow());
+            if (file != null) {
+                canvasManager.exportToPDF(file);
+            }
+        });
+
         MenuItem exitItem = new MenuItem("Exit");
         exitItem.setOnAction(e -> System.exit(0));
 
-        fileMenu.getItems().addAll(saveItem, openItem, new SeparatorMenuItem(), exitItem);
+        fileMenu.getItems().addAll(saveItem, openItem, exportPdfItem, new SeparatorMenuItem(), exitItem);
 
         // --- EDIT MENU ---
         Menu editMenu = new Menu("Edit");

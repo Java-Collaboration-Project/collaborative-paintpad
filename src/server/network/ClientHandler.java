@@ -62,6 +62,7 @@ public class ClientHandler implements Runnable {
         BroadcastManager.removeClient(this);
         if (currentUserId != null) {
             ConnectionRegistry.remove(currentUserId);
+            BroadcastManager.broadcast(new Message(shared.protocol.EventType.ACTIVE_USERS_LIST, "global-session", "SERVER", ConnectionRegistry.getActiveUsers()));
         }
         try {
             if (!socket.isClosed()) socket.close();

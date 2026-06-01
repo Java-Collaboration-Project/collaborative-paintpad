@@ -78,6 +78,7 @@ public class CanvasManager {
         startY = event.getY();
 
         if (toolManager.getCurrentTool() == ToolManager.Tool.SPLASH) {
+            saveSnapshot(); // Save before splash
             executeSplashPaint((int) startX, (int) startY, toolManager.getCurrentColor());
             fireEvent(startX, startY, startX, startY, "SPLASH");
             return;
@@ -88,6 +89,7 @@ public class CanvasManager {
 
         if (toolManager.getCurrentTool() == ToolManager.Tool.PEN ||
                 toolManager.getCurrentTool() == ToolManager.Tool.ERASER) {
+            saveSnapshot(); // Save before drawing line
             mainGc.beginPath();
             mainGc.moveTo(startX, startY);
         }
@@ -145,6 +147,7 @@ public class CanvasManager {
         mainGc.setStroke(toolManager.getCurrentColor());
 
         if (toolManager.getCurrentTool() == ToolManager.Tool.RECTANGLE) {
+            saveSnapshot(); // Save before rectangle
             double width = Math.abs(endX - startX);
             double height = Math.abs(endY - startY);
             double x = Math.min(startX, endX);
@@ -153,6 +156,7 @@ public class CanvasManager {
             fireEvent(startX, startY, endX, endY, "RECTANGLE");
 
         } else if (toolManager.getCurrentTool() == ToolManager.Tool.CIRCLE) {
+            saveSnapshot(); // Save before circle
             double radius = Math.hypot(endX - startX, endY - startY);
             mainGc.strokeOval(startX - radius, startY - radius, radius * 2, radius * 2);
             fireEvent(startX, startY, endX, endY, "CIRCLE");
@@ -197,6 +201,7 @@ public class CanvasManager {
     private void commitTextPadToCanvas(TextArea textPad, double x, double y, double fontSize) {
         String text = textPad.getText();
         if (text != null && !text.trim().isEmpty()) {
+            saveSnapshot(); // Save before text
             mainGc.setFill(toolManager.getCurrentColor());
             mainGc.setFont(new Font("Segoe UI", fontSize));
 
@@ -279,6 +284,7 @@ public class CanvasManager {
 
 
     public void drawRemoteEvent(DrawEvent event) {
+        saveSnapshot(); // Save before remote draw
         mainGc.setLineWidth(event.strokeWidth);
 
         if (event.toolType.startsWith("TEXT:")) {
@@ -381,6 +387,10 @@ public class CanvasManager {
                 System.err.println("Failed to save image: " + e.getMessage());
             }
         }
+    }
+
+    public void exportToPDF(File file) {
+        new client.export.PDFExporter().exportToPDF(mainCanvas, file);
     }
 
     public void loadCanvasFromDisk() {

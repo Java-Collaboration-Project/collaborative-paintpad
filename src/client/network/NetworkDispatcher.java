@@ -11,9 +11,14 @@ import java.util.List;
 
 public class NetworkDispatcher {
     private final CanvasManager canvasManager;
+    private java.util.function.Consumer<List<String>> onActiveUsersUpdated;
 
     public NetworkDispatcher(CanvasManager canvasManager) {
         this.canvasManager = canvasManager;
+    }
+
+    public void setOnActiveUsersUpdated(java.util.function.Consumer<List<String>> callback) {
+        this.onActiveUsersUpdated = callback;
     }
 
     public void handle(Message message) {
@@ -37,6 +42,14 @@ public class NetworkDispatcher {
 
                 case CLEAR_BOARD:
                     canvasManager.clearCanvas();
+                    break;
+
+                case ACTIVE_USERS_LIST:
+                    if (onActiveUsersUpdated != null) {
+                        String userListJson = JsonUtil.toJson(message.getPayload());
+                        List<String> activeUsers = JsonUtil.fromJson(userListJson, new TypeToken<List<String>>(){}.getType());
+                        onActiveUsersUpdated.accept(activeUsers);
+                    }
                     break;
 
                 default:

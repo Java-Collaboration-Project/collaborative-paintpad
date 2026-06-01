@@ -20,6 +20,10 @@ public class ConnectionRegistry {
     public static ClientHandler get(String userId) {
         return activeUsers.get(userId);
     }
+
+    public static java.util.List<String> getActiveUsers() {
+        return new java.util.ArrayList<>(activeUsers.keySet());
+    }
 }
 
 //package server.network;

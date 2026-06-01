@@ -23,9 +23,11 @@ public class WhiteboardStateService {
     public void syncBoardToClient(String sessionId, String targetUserId) {
         List<DrawEvent> events = rebuildBoardState(sessionId);
         Message syncMessage = new Message(EventType.SYNC_BOARD, sessionId, "SERVER", events);
-        // Note: In a robust setup, you'd route this directly to the single targetUserId.
-        // For demonstration, broadcast to session, clients ignore if already synced.
-        BroadcastManager.broadcastToSession(sessionId, syncMessage);
+        // Note: Route this directly to the single targetUserId so we don't wipe active clients' canvases.
+        server.network.ClientHandler target = server.network.ConnectionRegistry.get(targetUserId);
+        if (target != null) {
+            target.send(syncMessage);
+        }
     }
 
     public void replaySession(String sessionId) {

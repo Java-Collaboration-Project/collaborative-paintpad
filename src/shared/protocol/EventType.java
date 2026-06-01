@@ -10,5 +10,6 @@ public enum EventType {
     CLEAR_BOARD,
     SYNC_BOARD,
     REPLAY,
-    REPLAY_BOARD
+    REPLAY_BOARD,
+    ACTIVE_USERS_LIST
 }

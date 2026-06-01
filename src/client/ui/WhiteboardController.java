@@ -21,7 +21,17 @@ public class WhiteboardController {
 
     // For this example, we will use a default global session.
     // In a fully scaled app, this comes from the SessionSidebarController.
-    private final String currentSessionId = "global-session";
+    private String currentSessionId = "global-session";
+
+    public void setCurrentSessionId(String newSessionId) {
+        if (!this.currentSessionId.equals(newSessionId)) {
+            this.currentSessionId = newSessionId;
+            if (LoginController.currentUser != null) {
+                Message joinMsg = new Message(EventType.JOIN_SESSION, currentSessionId, LoginController.currentUser.getUsername(), null);
+                connectionManager.getConnection().send(joinMsg);
+            }
+        }
+    }
 
     public WhiteboardController() {
         root = new BorderPane();
@@ -79,8 +89,11 @@ public class WhiteboardController {
             connectionManager.getConnection().send(msg);
         });
 
-        // 5. Send initial JOIN_SESSION message so the server syncs the late-joiner board state
+        // 5. Send initial LOGIN and JOIN_SESSION message so the server syncs the late-joiner board state
         if (LoginController.currentUser != null) {
+            Message loginMsg = new Message(EventType.LOGIN, currentSessionId, LoginController.currentUser.getUsername(), null);
+            connectionManager.getConnection().send(loginMsg);
+
             Message joinMsg = new Message(EventType.JOIN_SESSION, currentSessionId, LoginController.currentUser.getUsername(), null);
             connectionManager.getConnection().send(joinMsg);
         }
@@ -88,7 +101,8 @@ public class WhiteboardController {
         // 6. Setup remaining UI components
         ToolbarController toolbarController = new ToolbarController(toolManager, canvasManager);
         MenuBarController menuBarController = new MenuBarController(canvasManager);
-        SidebarController sidebarController = new SidebarController(canvasManager);
+        SidebarController sidebarController = new SidebarController(canvasManager, this::setCurrentSessionId);
+        dispatcher.setOnActiveUsersUpdated(sidebarController::updateActiveUsers);
 
         VBox topContainer = new VBox();
         topContainer.getChildren().addAll(menuBarController.getMenuBar(), toolbarController.getToolbar());

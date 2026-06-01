@@ -16,6 +16,7 @@ public class SessionRouter {
             case LOGIN:
                 sender.setCurrentUserId(message.getSenderId());
                 ConnectionRegistry.add(message.getSenderId(), sender);
+                BroadcastManager.broadcast(new Message(shared.protocol.EventType.ACTIVE_USERS_LIST, "global-session", "SERVER", ConnectionRegistry.getActiveUsers()));
                 break;
 
             case JOIN_SESSION:

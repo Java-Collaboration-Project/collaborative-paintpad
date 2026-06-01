@@ -16,6 +16,10 @@ public class DrawingRepository {
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """;
 
+        if (event.actionId == null || event.actionId.trim().isEmpty()) {
+            event.actionId = java.util.UUID.randomUUID().toString();
+        }
+
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
