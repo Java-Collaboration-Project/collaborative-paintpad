@@ -277,6 +277,7 @@ public class CanvasManager {
                 Math.abs(c1.getOpacity() - c2.getOpacity()) < threshold;
     }
 
+
     public void drawRemoteEvent(DrawEvent event) {
         mainGc.setLineWidth(event.strokeWidth);
 

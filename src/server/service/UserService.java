@@ -18,8 +18,8 @@ public class UserService {
 
     public void registerUser(User user) {
 
-        userRepository.saveUser(user);
-
+//        userRepository.saveUser(user);
+        userRepository.saveOrUpdateUser(user);
         onlineUsers.put(user.getUserId(), user);
     }
 
