@@ -21,19 +21,15 @@ public class SessionRouter {
 
             case JOIN_SESSION:
                 sender.setCurrentSessionId(message.getSessionId());
-                // Synchronize the late joiner with the current board state
                 stateService.syncBoardToClient(message.getSessionId(), message.getSenderId());
                 break;
 
             case DRAW:
-                // Parse the payload into a DrawEvent
                 String drawJson = JsonUtil.toJson(message.getPayload());
                 DrawEvent event = JsonUtil.fromJson(drawJson, DrawEvent.class);
 
-                // Persist the event to the database
                 drawService.processDrawEvent(event);
 
-                // Broadcast to everyone else in the session
                 BroadcastManager.broadcastToSession(message.getSessionId(), message);
                 break;
 
@@ -50,14 +46,3 @@ public class SessionRouter {
         }
     }
 }
-
-//package server.network;
-//
-//import shared.protocol.Message;
-//
-//public class SessionRouter {
-//
-//    public static void route(Message message) {
-//        BroadcastManager.broadcast(message);
-//    }
-//}

@@ -10,7 +10,6 @@ public class ServerMain {
         int port = 5000;
         ServerCore serverCore = new ServerCore(port);
 
-        // Add a shutdown hook for graceful exit
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("Shutting down server...");
             serverCore.stop();
@@ -19,11 +18,3 @@ public class ServerMain {
         serverCore.start();
     }
 }
-
-//package server.network;
-//
-//public class ServerMain {
-//    public static void main(String[] args) throws Exception {
-//        new ServerCore(50000).start();
-//    }
-//}

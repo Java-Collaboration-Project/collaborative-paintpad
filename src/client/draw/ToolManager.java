@@ -1,4 +1,3 @@
-// client/draw/ToolManager.java
 package client.draw;
 
 import javafx.scene.paint.Color;

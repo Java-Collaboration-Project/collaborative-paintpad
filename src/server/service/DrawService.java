@@ -17,7 +17,6 @@ public class DrawService {
 
         drawingRepository.saveDrawEvent(event);
 
-        // Moss T networking layer broadcasts event
     }
 
     private void validate(DrawEvent event) {

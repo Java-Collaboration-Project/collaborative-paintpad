@@ -16,7 +16,6 @@ public class ImageExporter {
     }
 
     public void exportAsJPG(Canvas canvas, File file) {
-        // JPG doesn't support transparency, fill background with white
         SnapshotParameters params = new SnapshotParameters();
         params.setFill(javafx.scene.paint.Color.WHITE);
         saveImage(canvas, file, "jpg", params);

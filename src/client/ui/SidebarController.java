@@ -17,9 +17,8 @@ public class SidebarController {
     private final ListView<String> userList;
     private final CanvasManager canvasManager;
 
-    // Data structure to hold session drafts locally in RAM
     private final Map<String, Image> sessionDrafts;
-    private String currentUser = null; // Tracks who we are currently drawing with
+    private String currentUser = null;
     private final java.util.function.Consumer<String> onSessionChanged;
 
     public SidebarController(CanvasManager canvasManager, java.util.function.Consumer<String> onSessionChanged) {
@@ -46,33 +45,25 @@ public class SidebarController {
         );
         userList.setItems(users);
 
-        // Select the first user by default to start the session mapping
         currentUser = users.get(0);
         userList.getSelectionModel().select(0);
 
-        // Session Switching Logic
         userList.getSelectionModel().selectedItemProperty().addListener((obs, oldUser, newUser) -> {
             if (newUser != null && !newUser.equals(currentUser)) {
 
-                // 1. Save the current canvas state to the old user's map slot
                 if (currentUser != null) {
                     sessionDrafts.put(currentUser, canvasManager.getCanvasSnapshot());
                 }
 
-                // 2. Load the new user's saved draft (will return null if it's their first time)
                 Image savedDraft = sessionDrafts.get(newUser);
 
-                // 3. Clear Undo history so you don't undo into another user's drawing
                 canvasManager.clearHistory();
 
-                // 4. Paint the saved draft (or a blank slate) onto the canvas
                 canvasManager.loadCanvasSnapshot(savedDraft);
 
-                // 5. Update the current user tracker
                 currentUser = newUser;
                 System.out.println("Switched session to: " + newUser);
 
-                // 6. Tell WhiteboardController to switch session
                 String newSessionId = "global-session";
                 if (newUser.equals("Team Sync")) {
                     newSessionId = "global-session";

@@ -24,7 +24,6 @@ public class PDFExporter {
             PDImageXObject pdImage = LosslessFactory.createFromImage(document, awtImage);
 
             try (PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
-                // Scale to fit US Letter standard page (612 x 792)
                 float scale = Math.min(600f / awtImage.getWidth(), 750f / awtImage.getHeight());
                 float width = awtImage.getWidth() * scale;
                 float height = awtImage.getHeight() * scale;

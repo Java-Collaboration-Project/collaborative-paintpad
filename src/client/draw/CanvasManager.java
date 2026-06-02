@@ -59,7 +59,7 @@ public class CanvasManager {
         this.previewGc = previewCanvas.getGraphicsContext2D();
         this.toolManager = toolManager;
 
-        drawGridPattern(); // Initialize the grid
+        drawGridPattern();
         setupMouseEvents();
     }
 
@@ -78,7 +78,7 @@ public class CanvasManager {
         startY = event.getY();
 
         if (toolManager.getCurrentTool() == ToolManager.Tool.SPLASH) {
-            saveSnapshot(); // Save before splash
+            saveSnapshot();
             executeSplashPaint((int) startX, (int) startY, toolManager.getCurrentColor());
             fireEvent(startX, startY, startX, startY, "SPLASH");
             return;
@@ -89,7 +89,7 @@ public class CanvasManager {
 
         if (toolManager.getCurrentTool() == ToolManager.Tool.PEN ||
                 toolManager.getCurrentTool() == ToolManager.Tool.ERASER) {
-            saveSnapshot(); // Save before drawing line
+            saveSnapshot();
             mainGc.beginPath();
             mainGc.moveTo(startX, startY);
         }
@@ -147,7 +147,7 @@ public class CanvasManager {
         mainGc.setStroke(toolManager.getCurrentColor());
 
         if (toolManager.getCurrentTool() == ToolManager.Tool.RECTANGLE) {
-            saveSnapshot(); // Save before rectangle
+            saveSnapshot();
             double width = Math.abs(endX - startX);
             double height = Math.abs(endY - startY);
             double x = Math.min(startX, endX);
@@ -201,7 +201,7 @@ public class CanvasManager {
     private void commitTextPadToCanvas(TextArea textPad, double x, double y, double fontSize) {
         String text = textPad.getText();
         if (text != null && !text.trim().isEmpty()) {
-            saveSnapshot(); // Save before text
+            saveSnapshot();
             mainGc.setFill(toolManager.getCurrentColor());
             mainGc.setFont(new Font("Segoe UI", fontSize));
 
@@ -222,7 +222,6 @@ public class CanvasManager {
         overlayPane.getChildren().remove(textPad);
     }
 
-    // --- HELPER METHOD: FIRE NETWORK EVENT ---
     private void fireEvent(double x1, double y1, double x2, double y2, String tool) {
         if (onDrawEventCreated != null) {
             String colorHex = toHexColor(toolManager.getCurrentColor());
@@ -284,7 +283,7 @@ public class CanvasManager {
 
 
     public void drawRemoteEvent(DrawEvent event) {
-        saveSnapshot(); // Save before remote draw
+        saveSnapshot();
         mainGc.setLineWidth(event.strokeWidth);
 
         if (event.toolType.startsWith("TEXT:")) {
@@ -337,10 +336,10 @@ public class CanvasManager {
         mainCanvas.snapshot(null, snapshot);
 
         if (undoHistory.size() == MAX_HISTORY) {
-            undoHistory.remove(0); // Prevent OutOfMemory by dropping the oldest state
+            undoHistory.remove(0);
         }
         undoHistory.push(snapshot);
-        redoHistory.clear(); // Drawing a new line permanently clears the "redo" future
+        redoHistory.clear();
     }
 
     public void undo() {
@@ -400,7 +399,7 @@ public class CanvasManager {
         File file = fileChooser.showOpenDialog(mainCanvas.getScene().getWindow());
 
         if (file != null) {
-            saveSnapshot(); // Save current state in case they want to undo the load
+            saveSnapshot();
             Image image = new Image(file.toURI().toString());
             mainGc.clearRect(0, 0, mainCanvas.getWidth(), mainCanvas.getHeight());
             mainGc.drawImage(image, 0, 0);
@@ -416,7 +415,7 @@ public class CanvasManager {
     public void loadCanvasSnapshot(javafx.scene.image.Image snapshot) {
         clearCanvas(); // Always wipe the board first
         if (snapshot != null) {
-            mainGc.drawImage(snapshot, 0, 0); // Stamp the saved draft back on
+            mainGc.drawImage(snapshot, 0, 0);
         }
     }
 
@@ -425,10 +424,10 @@ public class CanvasManager {
         gc.setFill(Color.web("#d3d3d3")); // Professional light-grey
         for (int x = 0; x < gridCanvas.getWidth(); x += 20) {
             for (int y = 0; y < gridCanvas.getHeight(); y += 20) {
-                gc.fillOval(x, y, 2, 2); // Small notebook-style dots
+                gc.fillOval(x, y, 2, 2);
             }
         }
-        gridCanvas.setVisible(false); // Hidden by default
+        gridCanvas.setVisible(false);
     }
 
     public void setGridVisible(boolean visible) {
@@ -453,7 +452,6 @@ public class CanvasManager {
             return newCursor;
         });
 
-        // Glide the cursor to the teammate's current mouse position
         cursor.setLayoutX(x);
         cursor.setLayoutY(y);
     }

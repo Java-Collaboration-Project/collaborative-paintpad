@@ -61,7 +61,6 @@ public class MenuBarController {
 
         editMenu.getItems().addAll(undoItem, redoItem);
 
-        // --- VIEW MENU (NEW) ---
         Menu viewMenu = new Menu("View");
         CheckMenuItem gridItem = new CheckMenuItem("Show Dot Grid");
         gridItem.setOnAction(e -> canvasManager.setGridVisible(gridItem.isSelected()));

@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="java1">
+    <CLASSES />
+    <JAVADOC />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/../../../../../../Libraries/google-gson-b3b11d7/gson/src/main/java" />
+      <root url="file://$PROJECT_DIR$/../../../../../../Libraries/google-gson-b3b11d7/gson/src/main/java-templates" />
+      <root url="file://$PROJECT_DIR$/../../../../../../Libraries/google-gson-b3b11d7/gson/src/test/java" />
+    </SOURCES>
+  </library>
+</component>

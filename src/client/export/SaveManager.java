@@ -1,6 +1,5 @@
 package client.export;
 
-//import com.google.gson.Gson;
 import com.google.gson.Gson;
 import server.db.DrawingRepository;
 import shared.model.DrawEvent;
@@ -47,19 +46,3 @@ public class SaveManager {
         return new DrawEvent[0];
     }
 }
-//import java.io.File;
-//import java.io.FileWriter;
-//
-//public class SaveManager {
-//
-//    public void saveToFile(String json, File file) {
-//
-//        try (FileWriter writer = new FileWriter(file)) {
-//
-//            writer.write(json);
-//
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//    }
-//}
