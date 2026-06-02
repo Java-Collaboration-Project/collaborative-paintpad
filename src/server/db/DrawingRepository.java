@@ -16,12 +16,24 @@ public class DrawingRepository {
 
     private static final java.util.Set<String> persistedEventIds = ConcurrentHashMap.newKeySet();
 
+    private static volatile boolean flushed = false;
+
     static {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("[ShutdownHook] Flushing drawing cache to database...");
-            flushCacheToDatabase();
+            flushAll();
             System.out.println("[ShutdownHook] Flush complete.");
         }));
+    }
+
+
+    public static synchronized void flushAll() {
+        if (flushed) {
+            System.out.println("[Cache] Already flushed, skipping.");
+            return;
+        }
+        flushCacheToDatabase();
+        flushed = true;
     }
 
     public void saveDrawEvent(DrawEvent event) {
@@ -36,7 +48,6 @@ public class DrawingRepository {
     }
 
     public List<DrawEvent> getEventsBySession(String sessionId) {
-        // Fast path: return from cache if available
         List<DrawEvent> cached = sessionCache.get(sessionId);
         if (cached != null) {
             System.out.println("[Cache] HIT for session " + sessionId + " (" + cached.size() + " events)");
@@ -92,22 +103,25 @@ public class DrawingRepository {
     private static void flushCacheToDatabase() {
         String sql = """
             INSERT INTO draw_events (
-                id, session_id, user_id, tool_type, color, stroke_width, x1, y1, x2, y2, timestamp
+                id, session_id, user_id, tool, color, stroke_width, x1, y1, x2, y2, timestamp
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """;
 
         int totalFlushed = 0;
 
-        for (Map.Entry<String, List<DrawEvent>> entry : sessionCache.entrySet()) {
-            List<DrawEvent> events = entry.getValue();
-            synchronized (events) {
-                for (DrawEvent event : events) {
-                    if (persistedEventIds.contains(event.actionId)) {
-                        continue;
-                    }
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-                    try (Connection conn = DatabaseManager.getConnection();
-                         PreparedStatement stmt = conn.prepareStatement(sql)) {
+            conn.setAutoCommit(false); // Use a transaction for atomicity
+
+            for (Map.Entry<String, List<DrawEvent>> entry : sessionCache.entrySet()) {
+                List<DrawEvent> events = entry.getValue();
+                synchronized (events) {
+                    for (DrawEvent event : events) {
+                        // Skip events that were originally loaded from the DB
+                        if (persistedEventIds.contains(event.actionId)) {
+                            continue;
+                        }
 
                         stmt.setString(1, event.actionId);
                         stmt.setString(2, event.sessionId);
@@ -121,14 +135,19 @@ public class DrawingRepository {
                         stmt.setDouble(10, event.y2);
                         stmt.setLong(11, event.timestamp);
 
-                        stmt.executeUpdate();
+                        stmt.addBatch();
                         totalFlushed++;
-                    } catch (Exception e) {
-                        System.err.println("[ShutdownHook] Failed to flush event " + event.actionId + ": " + e.getMessage());
                     }
                 }
             }
+
+            stmt.executeBatch();
+            conn.commit();
+            System.out.println("[Flush] Successfully flushed " + totalFlushed + " new events to database.");
+
+        } catch (Exception e) {
+            System.err.println("[Flush] FAILED to flush cache to database: " + e.getMessage());
+            e.printStackTrace();
         }
-        System.out.println("[ShutdownHook] Flushed " + totalFlushed + " new events to database.");
     }
 }

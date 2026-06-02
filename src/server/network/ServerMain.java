@@ -1,6 +1,7 @@
 package server.network;
 
 import server.db.DatabaseInitializer;
+import server.db.DrawingRepository;
 
 public class ServerMain {
     public static void main(String[] args) {
@@ -12,6 +13,7 @@ public class ServerMain {
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("Shutting down server...");
+            DrawingRepository.flushAll();
             serverCore.stop();
         }));
 

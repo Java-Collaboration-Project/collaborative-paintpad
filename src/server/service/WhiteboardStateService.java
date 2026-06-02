@@ -39,7 +39,7 @@ public class WhiteboardStateService {
 
             for (DrawEvent event : events) {
                 try {
-                    Thread.sleep(50); // Replay delay
+                    Thread.sleep(50);
                     Message drawMsg = new Message(EventType.DRAW, sessionId, event.userId, event);
                     BroadcastManager.broadcastToSession(sessionId, drawMsg);
                 } catch (InterruptedException ignored) {

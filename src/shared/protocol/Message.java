@@ -7,7 +7,7 @@ public class Message {
     private long timestamp;
     private Object payload;
 
-    public Message() {}
+//    public Message() {}
 
     public Message(EventType type, String sessionId, String senderId, Object payload) {
         this.type = type;

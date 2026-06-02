@@ -29,8 +29,8 @@ public class ClientConnection {
         }
     }
 
-    public void close() throws IOException {
-        if (listener != null) listener.stop();
-        if (socket != null && !socket.isClosed()) socket.close();
-    }
+//    public void close() throws IOException {
+//        if (listener != null) listener.stop();
+//        if (socket != null && !socket.isClosed()) socket.close();
+//    }
 }

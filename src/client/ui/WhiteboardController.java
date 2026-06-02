@@ -105,7 +105,7 @@ public class WhiteboardController {
         return root;
     }
 
-    public CanvasManager getCanvasManager() {
-        return canvasManager;
-    }
+//    public CanvasManager getCanvasManager() {
+//        return canvasManager;
+//    }
 }

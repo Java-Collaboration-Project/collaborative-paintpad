@@ -23,7 +23,6 @@ public class MenuBarController {
     public MenuBar getMenuBar() { return menuBar; }
 
     private void setupMenu() {
-        // --- FILE MENU ---
         Menu fileMenu = new Menu("File");
         MenuItem saveItem = new MenuItem("Save Local PNG...");
         saveItem.setAccelerator(new KeyCodeCombination(KeyCode.S, KeyCombination.CONTROL_DOWN));
@@ -49,7 +48,6 @@ public class MenuBarController {
 
         fileMenu.getItems().addAll(saveItem, openItem, exportPdfItem, new SeparatorMenuItem(), exitItem);
 
-        // --- EDIT MENU ---
         Menu editMenu = new Menu("Edit");
         MenuItem undoItem = new MenuItem("Undo");
         undoItem.setAccelerator(new KeyCodeCombination(KeyCode.Z, KeyCombination.CONTROL_DOWN));

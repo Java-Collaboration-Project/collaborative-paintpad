@@ -156,7 +156,7 @@ public class CanvasManager {
             fireEvent(startX, startY, endX, endY, "RECTANGLE");
 
         } else if (toolManager.getCurrentTool() == ToolManager.Tool.CIRCLE) {
-            saveSnapshot(); // Save before circle
+            saveSnapshot();
             double radius = Math.hypot(endX - startX, endY - startY);
             mainGc.strokeOval(startX - radius, startY - radius, radius * 2, radius * 2);
             fireEvent(startX, startY, endX, endY, "CIRCLE");
@@ -283,7 +283,6 @@ public class CanvasManager {
 
 
     public void drawRemoteEvent(DrawEvent event) {
-        saveSnapshot();
         mainGc.setLineWidth(event.strokeWidth);
 
         if (event.toolType.startsWith("TEXT:")) {
@@ -413,7 +412,7 @@ public class CanvasManager {
     }
 
     public void loadCanvasSnapshot(javafx.scene.image.Image snapshot) {
-        clearCanvas(); // Always wipe the board first
+        clearCanvas();
         if (snapshot != null) {
             mainGc.drawImage(snapshot, 0, 0);
         }
@@ -434,9 +433,7 @@ public class CanvasManager {
         gridCanvas.setVisible(visible);
     }
 
-    // --- NEW: LIVE CURSOR METHODS ---
     public void updateRemoteCursor(String username, double x, double y, String colorHex) {
-        // If the teammate doesn't have a cursor on screen yet, build one!
         Label cursor = remoteCursors.computeIfAbsent(username, k -> {
             Label newCursor = new Label("↖ " + username);
             newCursor.setStyle(
